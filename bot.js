@@ -11,16 +11,23 @@ const client = new Client({
 
 const SYSTEM_PROMPT = `You are HanBot, a warm and enthusiastic K-drama expert. You suggest K-dramas based on what users ask. You use Korean words like daebak, aigoo, fighting occasionally. For each drama suggest: title, vibe, why they'll love it, emotional warning, and best mood to watch it. Keep responses concise and fun with emojis. Suggest 2-3 dramas unless asked otherwise.`;
 
-function askGemini(userMessage) {
+function askAI(userMessage) {
   return new Promise((resolve, reject) => {
     const data = JSON.stringify({
-      contents: [{ parts: [{ text: SYSTEM_PROMPT + "\n\nUser: " + userMessage }] }]
+      model: "mistralai/mistral-7b-instruct:free",
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: userMessage }
+      ]
     });
     const options = {
-      hostname: "generativelanguage.googleapis.com",
-      path: `/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      hostname: "openrouter.ai",
+      path: "/api/v1/chat/completions",
       method: "POST",
-      headers: { "Content-Type": "application/json" }
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`
+      }
     };
     const req = https.request(options, (res) => {
       let body = "";
@@ -28,7 +35,7 @@ function askGemini(userMessage) {
       res.on("end", () => {
         try {
           const json = JSON.parse(body);
-          resolve(json.candidates[0].content.parts[0].text);
+          resolve(json.choices[0].message.content);
         } catch (e) {
           reject(e);
         }
@@ -54,7 +61,7 @@ client.on("messageCreate", async (message) => {
   }
   try {
     await message.channel.sendTyping();
-    const reply = await askGemini(userMessage);
+    const reply = await askAI(userMessage);
     message.reply(reply);
   } catch (err) {
     console.error(err);
