@@ -7,6 +7,6 @@
   },
   "dependencies": {
     "discord.js": "^14.0.0",
-    "@anthropic-ai/sdk": "^0.20.0"
+    "@google/generative-ai": "^0.1.3"
   }
 }
